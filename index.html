@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Evenly Scattered Huge Hacker Words</title>
+  <title>Evenly Scattered Hacker Words (Smaller)</title>
   <style>
     html, body {
       margin: 0;
@@ -15,7 +15,7 @@
     .word {
       position: absolute;
       font-family: 'Fira Mono', 'Consolas', 'Monaco', monospace;
-      font-size: 8vw;
+      font-size: 4vw;
       color: #39ff14;
       user-select: none;
       pointer-events: none;
@@ -48,7 +48,6 @@ function getViewportSize() {
 
 // Evenly distribute words in grid cells with jitter
 function initPositions() {
-  // First, remove any previous words
   wordElems.forEach(e => e.remove());
   wordElems.length = 0;
   states.length = 0;
@@ -56,11 +55,9 @@ function initPositions() {
   const {w: screenW, h: screenH} = getViewportSize();
   const N = words.length;
 
-  // Find rows and columns for best grid
   let cols = Math.ceil(Math.sqrt(N * screenW / screenH));
   let rows = Math.ceil(N / cols);
 
-  // Place words in grid cells
   let cellW = screenW / cols;
   let cellH = screenH / rows;
 
@@ -68,32 +65,26 @@ function initPositions() {
     const col = idx % cols;
     const row = Math.floor(idx / cols);
 
-    // Jitter inside cell so it looks scattered
     const jitterX = (Math.random() - 0.5) * cellW * 0.4;
     const jitterY = (Math.random() - 0.5) * cellH * 0.4;
 
-    // Estimate word position (center of cell + jitter)
     const baseX = (col + 0.5) * cellW + jitterX;
     const baseY = (row + 0.5) * cellH + jitterY;
 
-    // Create word element (hidden for initial layout)
     const span = document.createElement('span');
     span.textContent = word;
     span.className = 'word';
     span.style.visibility = 'hidden';
     document.body.appendChild(span);
 
-    // Measure word size
     const rect = span.getBoundingClientRect();
     const wordW = rect.width;
     const wordH = rect.height;
 
-    // Clamp so word stays in viewport
     const margin = 10;
     const clampX = Math.max(margin, Math.min(baseX, screenW - wordW - margin));
     const clampY = Math.max(margin, Math.min(baseY, screenH - wordH - margin));
 
-    // Store state
     states.push({
       baseX: clampX,
       baseY: clampY,
@@ -127,12 +118,10 @@ function animate() {
     const state = states[i];
     const elem = wordElems[i];
 
-    // Shiver effect
     state.phase += 0.07 + Math.random()*0.02;
     const shiverX = Math.sin(state.phase) * 8;
     const shiverY = Math.cos(state.phase) * 8;
 
-    // Repel if mouse is close (use center of word)
     const wordCenterX = state.x + state.width / 2;
     const wordCenterY = state.y + state.height / 2;
     const dx = wordCenterX - mouseX;
@@ -142,7 +131,6 @@ function animate() {
     let repelForceX = 0, repelForceY = 0;
     const repelRadius = 220;
     if (dist < repelRadius) {
-      // Repel force: the closer, the stronger (springy)
       const force = (repelRadius - dist) * 1.1;
       const angle = Math.atan2(dy, dx);
       repelForceX = Math.cos(angle) * force;
@@ -152,26 +140,22 @@ function animate() {
       elem.classList.remove('active');
     }
 
-    // Spring back to base + shiver
     const springX = (state.baseX + shiverX - state.x) * 0.13;
     const springY = (state.baseY + shiverY - state.y) * 0.13;
 
     state.vx += springX + repelForceX;
     state.vy += springY + repelForceY;
 
-    // friction
     state.vx *= 0.84;
     state.vy *= 0.84;
 
     state.x += state.vx;
     state.y += state.vy;
 
-    // Clamp words to stay inside viewport
     const {w: screenW, h: screenH} = getViewportSize();
     state.x = Math.max(0, Math.min(state.x, screenW - state.width));
     state.y = Math.max(0, Math.min(state.y, screenH - state.height));
 
-    // Update position
     elem.style.transform = `translate(${state.x}px, ${state.y}px)`;
   }
   requestAnimationFrame(animate);
